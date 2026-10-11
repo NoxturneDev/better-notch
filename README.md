@@ -5,6 +5,13 @@ An original macOS background app that places a black notch-shaped panel over the
 - **Home Tab**:
   - **Now-Playing Media Widget**: Displays the current track and album artwork from Spotify or Apple Music with play/pause, next, and previous track controls (via AppleScript and DistributedNotificationCenter).
   - **Files Tray**: Drag and drop files onto the notch (closed or open) to stage them in memory, drag them out, AirDrop them directly, or clear the tray.
+- **Agents Tab**:
+  - Displays herdr multi-agent swarm status and active vault task plans.
+  - **Tasks**: Each active plan shows project name, title, checkbox completion ratio (`done/total`), progress bar, the plan's `next:` step, and capsules for assigned agents.
+  - **Ready to wrap up**: Highlights completed tasks where all checkboxes are checked but the plan status is not yet marked done/closed.
+  - **Other agents**: Shows live active agents not assigned to any listed plan.
+  - Click any task row to focus its first waiting or active agent; click any agent capsule to focus that specific agent (runs `herdr agent focus <pane_id>` and brings the terminal app to front).
+  - Tasks link to live agents via the plan markdown frontmatter `workers: [agent-name1, agent-name2]`. Note that example checkboxes inside markdown code blocks are counted if formatted with `- [ ]` / `- [x]`.
 - **Timer Tab**:
   - Countdown timer with quick presets (5m, 10m, 15m, 25m) and +/- 1m adjustments.
   - Stopwatch.
@@ -23,8 +30,8 @@ An original macOS background app that places a black notch-shaped panel over the
   - Real-time network download/upload rates.
   - Weather widget: shows current temperature, summary, and weather icon via Open-Meteo. Only the city name is sent for geocoding and forecast queries (no account, no location permissions required). Change city anytime in the input field.
 - **Status Strip & Closed Indicators**:
-  - Top strip shows battery level / charging state and weather alongside the hardware notch.
-  - Closed notch displays mini album art while music is playing and active countdown/stopwatch time alongside the camera notch without opening the full panel.
+  - Top strip shows tab bar with waiting agent indicators, battery level / charging state, and weather alongside the hardware notch.
+  - Closed notch displays mini album art while music is playing, active countdown/stopwatch time, and waiting agent count badge (orange dot + count) alongside the camera notch without opening the full panel.
 
 ## Requirements
 
@@ -56,6 +63,19 @@ NotchClone runs as an accessory background app without a Dock icon (`LSUIElement
 NotchClone requires **no privacy permissions** (no Location, Accessibility, Screen Recording, Notifications, or Calendar permissions).
 
 On first interaction with media playback controls or polling Spotify / Apple Music, macOS prompts for standard AppleScript Automation permissions (`NSAppleEventsUsageDescription`) to allow controlling playback and reading song metadata.
+
+### Configuration
+
+Optional settings can be configured using `defaults write com.noxturne.notchclone <key> <value>`:
+
+- **Vault Projects Path** (`vaultProjectsPath`): Root directory where markdown project plans are scanned. Defaults to `~/Projects/my-notes/projects`.
+  ```bash
+  defaults write com.noxturne.notchclone vaultProjectsPath "/path/to/my-notes/projects"
+  ```
+- **Terminal Bundle Identifier** (`terminalBundleId`): Bundle ID of the terminal application to focus when clicking an agent row or capsule. Defaults to `com.mitchellh.ghostty`.
+  ```bash
+  defaults write com.noxturne.notchclone terminalBundleId "com.apple.Terminal"
+  ```
 
 ## Quitting
 
