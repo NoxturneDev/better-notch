@@ -32,6 +32,16 @@ An original macOS background app that places a black notch-shaped panel over the
 - **Status Strip & Closed Indicators**:
   - Top strip shows tab bar with waiting agent indicators, battery level / charging state, and weather alongside the hardware notch.
   - Closed notch displays mini album art while music is playing, active countdown/stopwatch time, and waiting agent count badge (orange dot + count) alongside the camera notch without opening the full panel.
+- **Menu Bar Item & Token Usage Popover**:
+  - Adds a menu bar status item showing the terminal icon and count of agents currently waiting for user response (e.g. `" 5"`).
+  - Clicking toggles a dark transient popover with:
+    - **Agent Status Ring**: Multi-color arc ring (waiting = orange, working = green, idle = grey) with central waiting badge.
+    - **Usage History**: 7-day bar chart showing daily token consumption and total cost at API prices.
+    - **Today**: Stacked tool-share bar and breakdown for tools (Claude Code, Antigravity, Gemini CLI, OpenCode, Codex).
+    - **Claude Usage Window**: 5-hour rolling window reset timer, token usage, and elapsed time progress bar.
+    - **Tasks & Agents**: The active task progress rows and live agent list; clicking any item focuses the agent in herdr and closes the popover.
+  - **"At API Prices" Note**: All costs are estimated by `ccusage` at public pay-per-token API rates as a measure of workload size, not actual subscription billing.
+  - **Requirements & Offline Execution**: Requires `bun` (at `~/.bun/bin/bun`, `/opt/homebrew/bin/bun`, or `/usr/local/bin/bun`) and `ccusage` (at `~/.bun/bin/ccusage`). All invocations use `--offline` with zero network overhead. Usage is refreshed only while the popover is open (every 60 s) and never polled while closed. On screens with heavy menu bar clutter, macOS may hide overflow items behind the notch.
 
 ## Requirements
 
