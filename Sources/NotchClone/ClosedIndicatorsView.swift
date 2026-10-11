@@ -20,6 +20,8 @@ struct ClosedIndicatorsView: View {
                             .font(.system(size: 12))
                             .foregroundStyle(.white)
                     }
+                } else if services.herdr.waitingCount > 0 {
+                    waitingBadge
                 } else {
                     Color.clear
                 }
@@ -39,6 +41,8 @@ struct ClosedIndicatorsView: View {
                                 .foregroundStyle(.white)
                         }
                     }
+                } else if services.herdr.waitingCount > 0 && services.nowPlaying.track?.isPlaying == true {
+                    waitingBadge
                 } else if services.nowPlaying.track?.isPlaying == true {
                     Image(systemName: "waveform")
                         .font(.system(size: 12))
@@ -51,5 +55,17 @@ struct ClosedIndicatorsView: View {
             .frame(width: NotchGeometry.indicatorWidth, height: notchSize.height)
         }
         .frame(height: notchSize.height)
+    }
+
+    private var waitingBadge: some View {
+        HStack(spacing: 4) {
+            Circle()
+                .fill(Color.orange)
+                .frame(width: 5, height: 5)
+            Text("\(services.herdr.waitingCount)")
+                .font(.system(size: 11, weight: .semibold))
+                .monospacedDigit()
+                .foregroundStyle(.white)
+        }
     }
 }

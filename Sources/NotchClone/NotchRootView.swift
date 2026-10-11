@@ -26,7 +26,7 @@ struct NotchRootView: View {
                 if model.isOpen {
                     VStack(spacing: 0) {
                         HStack(spacing: 0) {
-                            TabBarView(model: model)
+                            TabBarView(model: model, herdr: services.herdr)
                                 .padding(.leading, 14)
 
                             Spacer(minLength: notchSize.width)
@@ -39,6 +39,8 @@ struct NotchRootView: View {
                             switch model.selectedTab {
                             case .home:
                                 HomeView(services: services)
+                            case .agents:
+                                AgentsView(herdr: services.herdr, plans: services.plans)
                             case .timer:
                                 TimerView(service: services.timer)
                             case .notes:
@@ -77,6 +79,7 @@ struct NotchRootView: View {
             }
             .animation(.spring(response: 0.35, dampingFraction: 0.8), value: model.isOpen)
             .animation(.spring(response: 0.35, dampingFraction: 0.8), value: services.showsClosedIndicators)
+            .animation(.spring(response: 0.35, dampingFraction: 0.8), value: services.herdr.waitingCount > 0)
         }
         .frame(width: NotchGeometry.windowSize.width, height: NotchGeometry.windowSize.height, alignment: .top)
         .onChange(of: model.isOpen) { _, _ in
@@ -88,10 +91,18 @@ struct NotchRootView: View {
     }
 
     private func updateActivity() {
+        services.herdr.setFastPolling(model.isOpen && model.selectedTab == .agents)
+
         if model.isOpen {
             services.nowPlaying.startPolling()
             services.battery.refresh()
             services.weather.refreshIfStale()
+
+            if model.selectedTab == .agents {
+                services.plans.start()
+            } else {
+                services.plans.stop()
+            }
 
             if model.selectedTab == .system {
                 services.systemStats.start()
@@ -105,6 +116,7 @@ struct NotchRootView: View {
         } else {
             services.nowPlaying.stopPolling()
             services.systemStats.stop()
+            services.plans.stop()
         }
     }
 

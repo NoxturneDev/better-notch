@@ -11,8 +11,10 @@ final class AppServices {
     let battery = BatteryService()
     let systemStats = SystemStatsService()
     let weather = WeatherService()
+    let herdr = HerdrService()
+    let plans = PlanStore()
 
     var showsClosedIndicators: Bool {
-        nowPlaying.track?.isPlaying == true || timer.isRunning
+        nowPlaying.track?.isPlaying == true || timer.isRunning || herdr.waitingCount > 0
     }
 }
