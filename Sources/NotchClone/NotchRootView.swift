@@ -91,18 +91,13 @@ struct NotchRootView: View {
     }
 
     private func updateActivity() {
-        services.herdr.setFastPolling(model.isOpen && model.selectedTab == .agents)
+        services.notchAgentsVisible = model.isOpen && model.selectedTab == .agents
+        services.updateAgentsActivity()
 
         if model.isOpen {
             services.nowPlaying.startPolling()
             services.battery.refresh()
             services.weather.refreshIfStale()
-
-            if model.selectedTab == .agents {
-                services.plans.start()
-            } else {
-                services.plans.stop()
-            }
 
             if model.selectedTab == .system {
                 services.systemStats.start()
@@ -116,7 +111,6 @@ struct NotchRootView: View {
         } else {
             services.nowPlaying.stopPolling()
             services.systemStats.stop()
-            services.plans.stop()
         }
     }
 

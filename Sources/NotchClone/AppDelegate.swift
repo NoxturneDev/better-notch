@@ -4,9 +4,11 @@ import AppKit
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let services = AppServices()
     private var controllers: [NotchWindowController] = []
+    private var statusItemController: StatusItemController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupControllers()
+        statusItemController = StatusItemController(services: services)
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(screenParametersChanged),

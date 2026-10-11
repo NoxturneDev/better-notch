@@ -13,6 +13,17 @@ final class AppServices {
     let weather = WeatherService()
     let herdr = HerdrService()
     let plans = PlanStore()
+    let usage = UsageService()
+
+    var notchAgentsVisible = false
+    var popoverVisible = false
+
+    func updateAgentsActivity() {
+        let active = notchAgentsVisible || popoverVisible
+        herdr.setFastPolling(active)
+        if active { plans.start() } else { plans.stop() }
+        if popoverVisible { usage.start() } else { usage.stop() }
+    }
 
     var showsClosedIndicators: Bool {
         nowPlaying.track?.isPlaying == true || timer.isRunning || herdr.waitingCount > 0

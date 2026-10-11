@@ -4,6 +4,7 @@ struct TaskRowView: View {
     let task: TaskRow
     var herdr: HerdrService
     var showCheckmark: Bool = false
+    var onFocus: ((HerdrAgent) -> Void)? = nil
 
     private var rowStateColor: Color {
         if task.agents.contains(where: \.isWaiting) {
@@ -17,9 +18,17 @@ struct TaskRowView: View {
 
     private func handleRowTap() {
         if let waiting = task.agents.first(where: \.isWaiting) {
-            herdr.focus(waiting)
+            triggerFocus(waiting)
         } else if let first = task.agents.first {
-            herdr.focus(first)
+            triggerFocus(first)
+        }
+    }
+
+    private func triggerFocus(_ agent: HerdrAgent) {
+        if let onFocus {
+            onFocus(agent)
+        } else {
+            herdr.focus(agent)
         }
     }
 
@@ -81,7 +90,7 @@ struct TaskRowView: View {
                 HStack(spacing: 4) {
                     ForEach(task.agents) { agent in
                         Button {
-                            herdr.focus(agent)
+                            triggerFocus(agent)
                         } label: {
                             HStack(spacing: 4) {
                                 Circle()
