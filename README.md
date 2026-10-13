@@ -6,12 +6,11 @@ An original macOS background app that places a black notch-shaped panel over the
   - **Now-Playing Media Widget**: Displays the current track, artist, and album artwork from any active media source (Chrome, Safari, YouTube, Spotify, Apple Music, VLC, podcasts) with play/pause, next, and previous track controls. Uses a bundled `mediaremote-adapter` child process (`/usr/bin/perl`) for real-time push events, with automatic AppleScript fallback for Spotify and Apple Music.
   - **Files Tray**: Drag and drop files onto the notch (closed or open) to stage them in memory, drag them out, AirDrop them directly, or clear the tray.
 - **Agents Tab**:
-  - Displays herdr multi-agent swarm status and active vault task plans.
-  - **Tasks**: Each active plan shows project name, title, checkbox completion ratio (`done/total`), progress bar, the plan's `next:` step, and capsules for assigned agents.
-  - **Ready to wrap up**: Highlights completed tasks where all checkboxes are checked but the plan status is not yet marked done/closed.
-  - **Other agents**: Shows live active agents not assigned to any listed plan.
-  - Click any task row to focus its first waiting or active agent; click any agent capsule to focus that specific agent (runs `herdr agent focus <pane_id>` and brings the terminal app to front).
-  - Tasks link to live agents via the plan markdown frontmatter `workers: [agent-name1, agent-name2]`. Note that example checkboxes inside markdown code blocks are counted if formatted with `- [ ]` / `- [x]`.
+  - Displays active projects as cards grouped by herdr workspace, with lead (Claude) status and task progress.
+  - **Summary Line**: Shows overall status (`⚠ N needs you · ● N working · ✓ N ready to wrap up`).
+  - **Project Cards**: Each card displays project/workspace name, status, Lead row (Claude title & status), active tasks with title, progress bar, checkbox ratio (`done/total`), and `Next:` step, followed by aggregated worker counts (`Workers: N working · N idle`).
+  - **Focus Navigation**: Click Lead row to focus the lead agent; click any task row to focus that task's waiting or active agent in Ghostty/terminal.
+  - **Herdr Map**: Collapsible map showing workspaces, tabs, who runs in them, and linked task titles (`tab N <agent> → <task>`); click any row to focus that tab's lead or first agent.
 - **Timer Tab**:
   - Countdown timer with quick presets (5m, 10m, 15m, 25m) and +/- 1m adjustments.
   - Stopwatch.
