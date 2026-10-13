@@ -22,7 +22,7 @@ struct NowPlayingView: View {
                             .lineLimit(1)
                             .truncationMode(.tail)
 
-                        Text(track.artist)
+                        Text(track.artist.isEmpty ? track.source.displayName : track.artist)
                             .font(.system(size: 11, weight: .regular))
                             .foregroundStyle(.white.opacity(0.7))
                             .lineLimit(1)

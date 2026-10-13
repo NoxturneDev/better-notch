@@ -8,19 +8,27 @@ final class NowPlayingService {
     var track: Track?
     var artwork: NSImage?
 
+    let adapter = MediaRemoteAdapter()
+
     private var pollTask: Task<Void, Never>?
     private var lastArtworkKey: String?
     private var spotifyObserver: Any?
     private var musicObserver: Any?
 
     init() {
+        adapter.onUpdate = { [weak self] in
+            Task { @MainActor in
+                self?.handleAdapterUpdate()
+            }
+        }
+
         spotifyObserver = DistributedNotificationCenter.default().addObserver(
             forName: Notification.Name("com.spotify.client.PlaybackStateChanged"),
             object: nil,
             queue: .main
         ) { [weak self] _ in
             Task { @MainActor in
-                self?.refresh()
+                self?.handleDistributedNotification()
             }
         }
 
@@ -30,7 +38,7 @@ final class NowPlayingService {
             queue: .main
         ) { [weak self] _ in
             Task { @MainActor in
-                self?.refresh()
+                self?.handleDistributedNotification()
             }
         }
 
@@ -60,7 +68,40 @@ final class NowPlayingService {
         }
     }
 
+    private func handleAdapterUpdate() {
+        if let adapterTrack = adapter.currentTrack {
+            self.track = adapterTrack
+            if let adapterArt = adapter.artworkImage {
+                self.artwork = adapterArt
+                self.lastArtworkKey = "\(adapterTrack.source.rawValue)|\(adapterTrack.title)|\(adapterTrack.artist)"
+            } else {
+                updateArtworkIfNeeded(for: adapterTrack)
+            }
+        } else {
+            // When adapter has no active track, fall back to AppleScript check
+            refresh()
+        }
+    }
+
+    private func handleDistributedNotification() {
+        // If adapter is not actively reporting a track, query AppleScript
+        if adapter.currentTrack == nil {
+            refresh()
+        }
+    }
+
     private func refreshAsync() async {
+        if let adapterTrack = adapter.currentTrack {
+            self.track = adapterTrack
+            if let adapterArt = adapter.artworkImage {
+                self.artwork = adapterArt
+                self.lastArtworkKey = "\(adapterTrack.source.rawValue)|\(adapterTrack.title)|\(adapterTrack.artist)"
+            } else {
+                updateArtworkIfNeeded(for: adapterTrack)
+            }
+            return
+        }
+
         let fetchedTrack = await Task.detached(priority: .userInitiated) { () -> Track? in
             NowPlayingService.fetchNowPlayingOnBackground()
         }.value
@@ -75,6 +116,12 @@ final class NowPlayingService {
         guard let current = newTrack else {
             self.artwork = nil
             self.lastArtworkKey = nil
+            return
+        }
+
+        if current.isFromAdapter, let adapterArt = adapter.artworkImage {
+            self.artwork = adapterArt
+            self.lastArtworkKey = "\(current.source.rawValue)|\(current.title)|\(current.artist)"
             return
         }
 
@@ -119,6 +166,9 @@ final class NowPlayingService {
             let data = descriptor.data
             guard !data.isEmpty else { return nil }
             return NSImage(data: data)
+
+        case .generic:
+            return nil
         }
     }
 
@@ -164,21 +214,40 @@ final class NowPlayingService {
     }
 
     func playPause() {
-        sendCommand("playpause")
+        if let currentTrack = track, currentTrack.isFromAdapter {
+            adapter.playPause()
+        } else {
+            sendCommand("playpause")
+        }
     }
 
     func next() {
-        sendCommand("next track")
+        if let currentTrack = track, currentTrack.isFromAdapter {
+            adapter.next()
+        } else {
+            sendCommand("next track")
+        }
     }
 
     func previous() {
-        sendCommand("previous track")
+        if let currentTrack = track, currentTrack.isFromAdapter {
+            adapter.previous()
+        } else {
+            sendCommand("previous track")
+        }
     }
 
     private func sendCommand(_ command: String) {
         let targetApp: String?
         if let currentSource = track?.source {
-            targetApp = currentSource.rawValue
+            switch currentSource {
+            case .spotify:
+                targetApp = "Spotify"
+            case .music:
+                targetApp = "Music"
+            case .generic(_, let appName):
+                targetApp = appName
+            }
         } else {
             if !NSRunningApplication.runningApplications(withBundleIdentifier: "com.spotify.client").isEmpty {
                 targetApp = "Spotify"
