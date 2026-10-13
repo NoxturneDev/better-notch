@@ -14,6 +14,7 @@ Written from scratch in Swift using Apple frameworks only. No Dock icon, no acco
 |---|---|
 | **Home** | Now playing from any app (Chrome, Safari, YouTube, Spotify, Apple Music, VLC, podcasts) with play/pause/next/previous. Files tray: drop files on the notch, drag them out, or AirDrop them. |
 | **Agents** | One card per project: the lead agent (Claude) and its status, the active task with progress and `Next:` step, and worker counts. A collapsible map of herdr workspaces and tabs. |
+| **Today** | Rolling in-flight task list from `Today.md`: states (`ready to wrap up`, `in progress`, `blocked`, `waiting`), staleness indicators, and one-click Obsidian note links. |
 | **Timer** | Countdown with presets, stopwatch, Pomodoro (25/5, long break every 4). Plays the system "Glass" sound when done. |
 | **Notes** | Auto-saving scratchpad stored at `~/Library/Application Support/NotchClone/notes.txt`. |
 | **Launch** | Pinned apps (drag an `.app` onto the notch to pin) and your macOS Shortcuts. |
@@ -21,7 +22,8 @@ Written from scratch in Swift using Apple frameworks only. No Dock icon, no acco
 
 Also:
 
-- **Closed notch indicators:** mini album art while music plays, running timer, and an orange badge with the count of agents waiting for you.
+- **Closed notch indicators:** mini album art while music plays, running timer, an orange badge for waiting agents, and a green badge for tasks ready to wrap up.
+- **Tab bar dots:** orange indicator dot on the Agents tab when agents are waiting, and on the Today tab when tasks are ready to wrap up or stale.
 - **Menu bar item:** shows the waiting-agent count. Its popover has an agent status ring, a 7-day token usage chart, today's usage by tool, the 5-hour Claude usage window, and the same project cards.
 
 ## Requirements
@@ -73,6 +75,33 @@ workers: [my-worker-agent]   # herdr agent names working on this plan
 
 Click a lead row, task row or map row to focus that agent's terminal.
 
+## How the Today tab works
+
+The tab displays an active rolling list of in-flight tasks read from `Today.md` (`~/Projects/my-notes/Today.md` by default). The notch only reads the file and never modifies it.
+
+### File format
+
+```markdown
+---
+updated: 2026-10-13T10:30
+---
+# Today — 2026-10-13
+
+## In flight
+- [[Withdraw and Leverage]] — **ready to wrap up** — all steps done, needs commit review (2026-10-13)
+- [[E raport features mcn-ziad]] — **in progress** — API done, mobile screen not started (2026-09-30)
+- [[Reinstall 119]] — **blocked** — waiting for infra access (2026-10-08)
+
+## Today
+- [ ] <free checklist, reset daily>
+```
+
+- **Contract line format:** `- [[<note title>]] — **<state>** — <where I stopped> (<YYYY-MM-DD>)`.
+- **States:** fixed set of `ready to wrap up`, `in progress`, `blocked`, and `waiting`.
+- **Staleness:** computed automatically. Tasks older than 14 days receive a `stale` chip and sort to the bottom. The header shows `updated N days ago` in orange when frontmatter `updated` is older than 2 days.
+- **Obsidian navigation:** clicking any row opens the note in Obsidian via `obsidian://open?vault=<vault>&file=<title>`.
+- **Polling:** polled every 30 s while the tab is active and every 60 s otherwise, skipping re-reads when the file modification time (`mtime`) is unchanged.
+
 ## How Now Playing works
 
 macOS 15.4 and later reject calls to the private MediaRemote framework from apps without an Apple entitlement. NotchClone runs the open-source [`mediaremote-adapter`](https://github.com/ungive/mediaremote-adapter) through `/usr/bin/perl` (a system binary that is allowed) and reads its JSON stream, so updates arrive as pushes with no polling.
@@ -96,6 +125,8 @@ Set with `defaults write com.noxturne.notchclone <key> <value>`:
 | Key | Default | Purpose |
 |---|---|---|
 | `vaultProjectsPath` | `~/Projects/my-notes/projects` | Folder scanned for `<project>/plan/*.md` |
+| `todayFilePath` | `~/Projects/my-notes/Today.md` | Path to the rolling in-flight task file |
+| `obsidianVaultName` | `my-notes` | Obsidian vault name used for note navigation |
 | `terminalBundleId` | `com.mitchellh.ghostty` | Terminal app brought to the front when you click an agent |
 
 ```bash
