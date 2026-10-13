@@ -7,6 +7,7 @@ import Observation
 final class HerdrService {
     var agents: [HerdrAgent] = []
     var workspaces: [HerdrWorkspace] = []
+    var progressByAgentId: [String: AgentProgress] = [:]
     var isAvailable = false
     var waitingCount: Int {
         agents.filter(\.isWaiting).count
@@ -15,6 +16,7 @@ final class HerdrService {
         agents.filter { $0.status == .working }.count
     }
 
+    private var transcriptMtimeByAgentId: [String: Date] = [:]
     private var isFastPolling = false
     private var pollingTask: Task<Void, Never>?
 
@@ -67,6 +69,9 @@ final class HerdrService {
             if workspaces != fetched.workspaces {
                 workspaces = fetched.workspaces
             }
+            if isFastPolling {
+                await refreshProgress(for: fetched.agents)
+            }
         } else {
             isAvailable = false
             if !agents.isEmpty {
@@ -74,6 +79,52 @@ final class HerdrService {
             }
             if !workspaces.isEmpty {
                 workspaces = []
+            }
+            progressByAgentId = [:]
+            transcriptMtimeByAgentId = [:]
+        }
+    }
+
+    private func refreshProgress(for agents: [HerdrAgent]) async {
+        let claudeAgents = agents.filter { $0.kind == "claude" }
+        guard !claudeAgents.isEmpty else {
+            if !progressByAgentId.isEmpty {
+                progressByAgentId = [:]
+                transcriptMtimeByAgentId = [:]
+            }
+            return
+        }
+
+        let currentMtimes = transcriptMtimeByAgentId
+        let agentInputs = claudeAgents.map { (id: $0.id, cwd: $0.cwd) }
+
+        let updates = await Task.detached(priority: .userInitiated) { () -> [(id: String, progress: AgentProgress?, mtime: Date?)] in
+            var results: [(id: String, progress: AgentProgress?, mtime: Date?)] = []
+            for item in agentInputs {
+                guard let (path, mtime) = AgentProgressReader.findNewestTranscript(cwd: item.cwd) else {
+                    results.append((id: item.id, progress: nil, mtime: nil))
+                    continue
+                }
+                if let cachedMtime = currentMtimes[item.id], cachedMtime == mtime {
+                    continue
+                }
+                let progress = AgentProgressReader.readProgress(fromTranscriptPath: path)
+                results.append((id: item.id, progress: progress, mtime: mtime))
+            }
+            return results
+        }.value
+
+        let liveClaudeIds = Set(claudeAgents.map { $0.id })
+        progressByAgentId = progressByAgentId.filter { liveClaudeIds.contains($0.key) }
+        transcriptMtimeByAgentId = transcriptMtimeByAgentId.filter { liveClaudeIds.contains($0.key) }
+
+        for update in updates {
+            if let progress = update.progress, let mtime = update.mtime {
+                progressByAgentId[update.id] = progress
+                transcriptMtimeByAgentId[update.id] = mtime
+            } else {
+                progressByAgentId.removeValue(forKey: update.id)
+                transcriptMtimeByAgentId.removeValue(forKey: update.id)
             }
         }
     }
