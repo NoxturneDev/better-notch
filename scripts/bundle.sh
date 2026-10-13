@@ -22,7 +22,12 @@ cp "$BIN_PATH" "$MACOS_DIR/NotchClone"
 chmod +x "$MACOS_DIR/NotchClone"
 cp "Resources/Info.plist" "$CONTENTS/Info.plist"
 
+if [ -d "Resources/mediaremote-adapter" ]; then
+    echo "Copying mediaremote-adapter..."
+    cp -R "Resources/mediaremote-adapter" "$RESOURCES_DIR/"
+fi
+
 echo "Signing bundle..."
-codesign --force --sign - "$APP_BUNDLE"
+codesign --force --deep --sign - "$APP_BUNDLE"
 
 echo "Bundling complete: $APP_BUNDLE"
