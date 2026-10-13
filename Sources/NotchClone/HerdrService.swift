@@ -6,6 +6,7 @@ import Observation
 @Observable
 final class HerdrService {
     var agents: [HerdrAgent] = []
+    var workspaces: [HerdrWorkspace] = []
     var isAvailable = false
     var waitingCount: Int {
         agents.filter(\.isWaiting).count
@@ -46,9 +47,10 @@ final class HerdrService {
 
     func refresh() async {
         guard let binary = HerdrService.findBinary() else {
-            if isAvailable || !agents.isEmpty {
+            if isAvailable || !agents.isEmpty || !workspaces.isEmpty {
                 isAvailable = false
                 agents = []
+                workspaces = []
             }
             return
         }
@@ -57,15 +59,21 @@ final class HerdrService {
             HerdrService.fetchSnapshot(binary: binary)
         }.value
 
-        if let fetchedAgents = fetched {
+        if let fetched {
             isAvailable = true
-            if agents != fetchedAgents {
-                agents = fetchedAgents
+            if agents != fetched.agents {
+                agents = fetched.agents
+            }
+            if workspaces != fetched.workspaces {
+                workspaces = fetched.workspaces
             }
         } else {
             isAvailable = false
             if !agents.isEmpty {
                 agents = []
+            }
+            if !workspaces.isEmpty {
+                workspaces = []
             }
         }
     }
@@ -126,28 +134,55 @@ final class HerdrService {
         return data
     }
 
-    private nonisolated static func fetchSnapshot(binary: String) -> [HerdrAgent]? {
+    struct SnapshotResult: Sendable {
+        let agents: [HerdrAgent]
+        let workspaces: [HerdrWorkspace]
+    }
+
+    private nonisolated static func fetchSnapshot(binary: String) -> SnapshotResult? {
         guard let data = runTool(binary: binary, arguments: ["api", "snapshot"]) else {
             return nil
         }
 
         do {
             let decoded = try JSONDecoder().decode(SnapshotEnvelope.self, from: data)
-            let workspaces = decoded.result.snapshot.workspaces ?? []
-            let workspaceMap = Dictionary(workspaces.map { ($0.workspace_id, $0.label) }, uniquingKeysWith: { first, _ in first })
-
+            let rawWorkspaces = decoded.result.snapshot.workspaces ?? []
+            let rawTabs = decoded.result.snapshot.tabs ?? []
             let rawAgents = decoded.result.snapshot.agents ?? []
-            return rawAgents.map { raw in
+
+            let tabsByWorkspace = Dictionary(grouping: rawTabs, by: { $0.workspace_id })
+            let workspaces = rawWorkspaces.map { rw in
+                let tabs = (tabsByWorkspace[rw.workspace_id] ?? [])
+                    .sorted { $0.number < $1.number }
+                    .map { rt in
+                        HerdrTab(
+                            id: rt.tab_id,
+                            workspaceId: rt.workspace_id,
+                            number: rt.number,
+                            paneCount: rt.pane_count,
+                            label: rt.label
+                        )
+                    }
+                return HerdrWorkspace(id: rw.workspace_id, label: rw.label, tabs: tabs)
+            }
+
+            let workspaceMap = Dictionary(workspaces.map { ($0.id, $0.label) }, uniquingKeysWith: { first, _ in first })
+
+            let agents = rawAgents.map { raw in
                 HerdrAgent(
                     id: raw.pane_id,
                     kind: raw.agent,
                     status: HerdrAgent.Status(rawValue: raw.agent_status),
                     name: raw.name,
                     cwd: raw.cwd ?? "",
+                    workspaceId: raw.workspace_id,
                     workspaceLabel: workspaceMap[raw.workspace_id] ?? raw.workspace_id,
+                    tabId: raw.tab_id ?? "",
                     title: raw.terminal_title_stripped
                 )
             }
+
+            return SnapshotResult(agents: agents, workspaces: workspaces)
         } catch {
             return nil
         }
@@ -164,7 +199,16 @@ private struct SnapshotEnvelope: Decodable {
                 let name: String?
                 let pane_id: String
                 let workspace_id: String
+                let tab_id: String?
                 let terminal_title_stripped: String?
+            }
+
+            struct RawTab: Decodable {
+                let tab_id: String
+                let workspace_id: String
+                let number: Int
+                let pane_count: Int
+                let label: String?
             }
 
             struct RawWorkspace: Decodable {
@@ -174,6 +218,7 @@ private struct SnapshotEnvelope: Decodable {
 
             let agents: [RawAgent]?
             let workspaces: [RawWorkspace]?
+            let tabs: [RawTab]?
         }
 
         let snapshot: SnapshotObj

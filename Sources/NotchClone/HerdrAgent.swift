@@ -24,7 +24,9 @@ struct HerdrAgent: Identifiable, Equatable, Sendable {
     let status: Status        // unknown for any value not listed
     let name: String?
     let cwd: String
+    let workspaceId: String
     let workspaceLabel: String
+    let tabId: String
     let title: String?
 
     var isWaiting: Bool { status == .blocked || status == .done }
