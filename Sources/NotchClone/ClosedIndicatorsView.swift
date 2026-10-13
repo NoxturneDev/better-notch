@@ -22,6 +22,8 @@ struct ClosedIndicatorsView: View {
                     }
                 } else if services.herdr.waitingCount > 0 {
                     waitingBadge
+                } else if canShowWrapUp {
+                    wrapUpBadge
                 } else {
                     Color.clear
                 }
@@ -43,6 +45,8 @@ struct ClosedIndicatorsView: View {
                     }
                 } else if services.herdr.waitingCount > 0 && services.nowPlaying.track?.isPlaying == true {
                     waitingBadge
+                } else if canShowWrapUp && services.nowPlaying.track?.isPlaying == true {
+                    wrapUpBadge
                 } else if services.nowPlaying.track?.isPlaying == true {
                     Image(systemName: "waveform")
                         .font(.system(size: 12))
@@ -57,12 +61,28 @@ struct ClosedIndicatorsView: View {
         .frame(height: notchSize.height)
     }
 
+    private var canShowWrapUp: Bool {
+        services.today.readyToWrapUpCount > 0 && !services.timer.isRunning && services.herdr.waitingCount == 0
+    }
+
     private var waitingBadge: some View {
         HStack(spacing: 4) {
             Circle()
                 .fill(Color.orange)
                 .frame(width: 5, height: 5)
             Text("\(services.herdr.waitingCount)")
+                .font(.system(size: 11, weight: .semibold))
+                .monospacedDigit()
+                .foregroundStyle(.white)
+        }
+    }
+
+    private var wrapUpBadge: some View {
+        HStack(spacing: 4) {
+            Image(systemName: "checkmark")
+                .font(.system(size: 9, weight: .bold))
+                .foregroundStyle(.green)
+            Text("\(services.today.readyToWrapUpCount)")
                 .font(.system(size: 11, weight: .semibold))
                 .monospacedDigit()
                 .foregroundStyle(.white)

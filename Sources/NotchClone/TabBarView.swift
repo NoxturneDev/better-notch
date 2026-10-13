@@ -3,9 +3,10 @@ import SwiftUI
 struct TabBarView: View {
     @Bindable var model: NotchViewModel
     var herdr: HerdrService
+    var today: TodayStore
 
     var body: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 5) {
             ForEach(NotchTab.allCases) { tab in
                 Button {
                     model.selectedTab = tab
@@ -17,6 +18,13 @@ struct TabBarView: View {
                             .frame(width: 24, height: 22)
 
                         if tab == .agents && herdr.waitingCount > 0 {
+                            Circle()
+                                .fill(Color.orange)
+                                .frame(width: 5, height: 5)
+                                .offset(x: -2, y: 2)
+                        }
+
+                        if tab == .today && today.showsTabDot {
                             Circle()
                                 .fill(Color.orange)
                                 .frame(width: 5, height: 5)

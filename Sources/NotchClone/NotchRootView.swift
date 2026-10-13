@@ -26,7 +26,7 @@ struct NotchRootView: View {
                 if model.isOpen {
                     VStack(spacing: 0) {
                         HStack(spacing: 0) {
-                            TabBarView(model: model, herdr: services.herdr)
+                            TabBarView(model: model, herdr: services.herdr, today: services.today)
                                 .padding(.leading, 14)
 
                             Spacer(minLength: notchSize.width)
@@ -41,6 +41,8 @@ struct NotchRootView: View {
                                 HomeView(services: services)
                             case .agents:
                                 AgentsView(herdr: services.herdr, plans: services.plans)
+                            case .today:
+                                TodayView(store: services.today)
                             case .timer:
                                 TimerView(service: services.timer)
                             case .notes:
@@ -80,6 +82,7 @@ struct NotchRootView: View {
             .animation(.spring(response: 0.35, dampingFraction: 0.8), value: model.isOpen)
             .animation(.spring(response: 0.35, dampingFraction: 0.8), value: services.showsClosedIndicators)
             .animation(.spring(response: 0.35, dampingFraction: 0.8), value: services.herdr.waitingCount > 0)
+            .animation(.spring(response: 0.35, dampingFraction: 0.8), value: services.today.readyToWrapUpCount > 0)
         }
         .frame(width: NotchGeometry.windowSize.width, height: NotchGeometry.windowSize.height, alignment: .top)
         .onChange(of: model.isOpen) { _, _ in
@@ -93,6 +96,9 @@ struct NotchRootView: View {
     private func updateActivity() {
         services.notchAgentsVisible = model.isOpen && model.selectedTab == .agents
         services.updateAgentsActivity()
+
+        services.notchTodayVisible = model.isOpen && model.selectedTab == .today
+        services.updateTodayActivity()
 
         if model.isOpen {
             services.nowPlaying.startPolling()
