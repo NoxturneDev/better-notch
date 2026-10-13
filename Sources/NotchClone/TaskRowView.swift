@@ -88,29 +88,57 @@ struct TaskRowView: View {
                 Spacer(minLength: 8)
 
                 HStack(spacing: 4) {
-                    ForEach(task.agents) { agent in
-                        Button {
-                            triggerFocus(agent)
-                        } label: {
-                            HStack(spacing: 4) {
+                    if task.agents.count <= 3 {
+                        ForEach(task.agents) { agent in
+                            Button {
+                                triggerFocus(agent)
+                            } label: {
+                                HStack(spacing: 4) {
+                                    Circle()
+                                        .fill(statusColor(agent.status))
+                                        .frame(width: 4, height: 4)
+                                    Text(agent.displayName)
+                                        .font(.system(size: 9, weight: .medium))
+                                        .foregroundStyle(.white.opacity(0.85))
+                                        .lineLimit(1)
+                                        .fixedSize()
+                                }
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(
+                                    Capsule()
+                                        .fill(Color.white.opacity(0.12))
+                                )
+                            }
+                            .buttonStyle(.plain)
+                            .help("Focus \(agent.displayName)")
+                        }
+                    } else {
+                        ForEach(task.agents) { agent in
+                            Button {
+                                triggerFocus(agent)
+                            } label: {
                                 Circle()
                                     .fill(statusColor(agent.status))
-                                    .frame(width: 4, height: 4)
-                                Text(agent.displayName)
-                                    .font(.system(size: 9, weight: .medium))
-                                    .foregroundStyle(.white.opacity(0.85))
+                                    .frame(width: 8, height: 8)
+                                    .frame(width: 14, height: 14)
+                                    .contentShape(Rectangle())
                             }
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(
-                                Capsule()
-                                    .fill(Color.white.opacity(0.12))
-                            )
+                            .buttonStyle(.plain)
+                            .help("\(agent.displayName) — \(statusWord(agent.status))")
                         }
-                        .buttonStyle(.plain)
-                        .help("Focus \(agent.displayName)")
+
+                        if !agentsSummaryText.isEmpty {
+                            Text(agentsSummaryText)
+                                .font(.system(size: 9))
+                                .foregroundStyle(.white.opacity(0.55))
+                                .lineLimit(1)
+                                .fixedSize()
+                        }
                     }
                 }
+                .fixedSize()
+                .layoutPriority(1)
             }
         }
         .padding(.horizontal, 8)
@@ -122,6 +150,39 @@ struct TaskRowView: View {
         .contentShape(Rectangle())
         .onTapGesture {
             handleRowTap()
+        }
+    }
+
+    private var agentsSummaryText: String {
+        let waitingCount = task.agents.filter(\.isWaiting).count
+        let workingCount = task.agents.filter { $0.status == .working }.count
+        let idleCount = task.agents.filter { $0.status == .idle }.count
+
+        var parts: [String] = []
+        if waitingCount > 0 {
+            parts.append("\(waitingCount) waiting")
+        }
+        if workingCount > 0 {
+            parts.append("\(workingCount) working")
+        }
+        if idleCount > 0 {
+            parts.append("\(idleCount) idle")
+        }
+        return parts.joined(separator: " · ")
+    }
+
+    private func statusWord(_ status: HerdrAgent.Status) -> String {
+        switch status {
+        case .blocked:
+            return "blocked"
+        case .done:
+            return "done"
+        case .working:
+            return "working"
+        case .idle:
+            return "idle"
+        case .unknown:
+            return "unknown"
         }
     }
 
