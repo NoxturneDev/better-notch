@@ -13,7 +13,7 @@ Written from scratch in Swift using Apple frameworks only. No Dock icon, no acco
 | Tab | What it does |
 |---|---|
 | **Home** | Now playing from any app (Chrome, Safari, YouTube, Spotify, Apple Music, VLC, podcasts) with play/pause/next/previous. Files tray: drop files on the notch, drag them out, or AirDrop them. |
-| **Agents** | One card per project: the lead agent (Claude) and its status, the active task with progress and `Next:` step, and worker counts. A collapsible map of herdr workspaces and tabs. |
+| **Agents** | One card per project: the lead agent (Claude) and its status, its last session progress recap, the active task with progress and `Next:` step, and worker counts. A collapsible map of herdr workspaces and tabs. |
 | **Today** | Rolling in-flight task list from `Today.md`: states (`ready to wrap up`, `in progress`, `blocked`, `waiting`), staleness indicators, and one-click Obsidian note links. |
 | **Timer** | Countdown with presets, stopwatch, Pomodoro (25/5, long break every 4). Plays the system "Glass" sound when done. |
 | **Notes** | Auto-saving scratchpad stored at `~/Library/Application Support/NotchClone/notes.txt`. |
@@ -71,7 +71,7 @@ workers: [my-worker-agent]   # herdr agent names working on this plan
 
 **Grouping.** A plan is placed under a herdr workspace by, in order: a live agent named in `workers:`; a workspace whose label equals the project folder name; an agent whose working directory ends in the project folder name. Anything unmatched goes under **No active session**.
 
-**Lead.** The `claude` agent in that workspace. herdr does not expose Claude's internal progress, so the lead row shows its session title and status, and progress comes from the plan checklist.
+**Lead.** The `claude` agent in that workspace. The lead row displays its session title, status, and its last progress recap (`away_summary` or recent assistant text) read directly from the Claude Code transcript, with relative age and click-to-expand.
 
 Click a lead row, task row or map row to focus that agent's terminal.
 
