@@ -58,7 +58,26 @@ struct ProjectCard: Identifiable, Sendable {
     let projectName: String
     let workspace: HerdrWorkspace?
     let lead: HerdrAgent?
+    let leadProgress: AgentProgress?
     let tasks: [TaskRow]
     let workerCounts: WorkerCounts
     let status: Status
+
+    init(
+        projectName: String,
+        workspace: HerdrWorkspace?,
+        lead: HerdrAgent?,
+        leadProgress: AgentProgress? = nil,
+        tasks: [TaskRow],
+        workerCounts: WorkerCounts,
+        status: Status
+    ) {
+        self.projectName = projectName
+        self.workspace = workspace
+        self.lead = lead
+        self.leadProgress = leadProgress
+        self.tasks = tasks
+        self.workerCounts = workerCounts
+        self.status = status
+    }
 }

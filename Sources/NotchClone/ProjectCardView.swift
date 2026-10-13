@@ -5,6 +5,8 @@ struct ProjectCardView: View {
     var herdr: HerdrService
     var onFocus: ((HerdrAgent) -> Void)? = nil
 
+    @State private var isProgressExpanded: Bool = false
+
     private func triggerFocus(_ agent: HerdrAgent) {
         if let onFocus {
             onFocus(agent)
@@ -83,6 +85,42 @@ struct ProjectCardView: View {
                 }
                 .buttonStyle(.plain)
                 .help("Focus Lead (Claude)")
+
+                if let progress = card.leadProgress {
+                    HStack(alignment: .top, spacing: 6) {
+                        Color.clear
+                            .frame(width: 44, height: 1)
+
+                        Button {
+                            withAnimation(.easeInOut(duration: 0.15)) {
+                                isProgressExpanded.toggle()
+                            }
+                        } label: {
+                            HStack(alignment: .top, spacing: 4) {
+                                Group {
+                                    if let age = progress.relativeAge {
+                                        Text(age + " · ")
+                                            .foregroundStyle(.white.opacity(0.45))
+                                        + Text(progress.text)
+                                            .foregroundStyle(.white.opacity(0.7))
+                                    } else {
+                                        Text(progress.text)
+                                            .foregroundStyle(.white.opacity(0.7))
+                                    }
+                                }
+                                .font(.system(size: 11, weight: .regular))
+                                .lineLimit(isProgressExpanded ? nil : 3)
+                                .multilineTextAlignment(.leading)
+                                .fixedSize(horizontal: false, vertical: true)
+
+                                Spacer(minLength: 0)
+                            }
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .help(isProgressExpanded ? "Click to collapse" : "Click to expand")
+                    }
+                }
             }
 
             // Task blocks

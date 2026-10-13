@@ -6,7 +6,13 @@ struct AgentBoard: Sendable {
     let workingCount: Int
     let readyToWrapUpCount: Int
 
-    init(agents: [HerdrAgent], workspaces: [HerdrWorkspace] = [], plans: [PlanSummary], now: Date = Date()) {
+    init(
+        agents: [HerdrAgent],
+        workspaces: [HerdrWorkspace] = [],
+        plans: [PlanSummary],
+        progressByAgentId: [String: AgentProgress] = [:],
+        now: Date = Date()
+    ) {
         let liveAgentsByName = Dictionary(grouping: agents.filter { $0.name != nil }, by: { $0.name! })
         let fourteenDaysAgo = now.addingTimeInterval(-14 * 24 * 3600)
 
@@ -127,10 +133,13 @@ struct AgentBoard: Sendable {
                 status = .notStarted
             }
 
+            let leadProgress = lead != nil ? progressByAgentId[lead!.id] : nil
+
             cards.append(ProjectCard(
                 projectName: ws.label,
                 workspace: ws,
                 lead: lead,
+                leadProgress: leadProgress,
                 tasks: wsTaskRows,
                 workerCounts: workerCounts,
                 status: status

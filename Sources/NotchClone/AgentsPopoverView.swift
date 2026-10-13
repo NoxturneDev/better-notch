@@ -23,7 +23,7 @@ struct AgentsPopoverView: View {
     }
 
     var body: some View {
-        let board = AgentBoard(agents: services.herdr.agents, workspaces: services.herdr.workspaces, plans: services.plans.plans)
+        let board = AgentBoard(agents: services.herdr.agents, workspaces: services.herdr.workspaces, plans: services.plans.plans, progressByAgentId: services.herdr.progressByAgentId)
         let idleCount = services.herdr.agents.filter { $0.status == .idle }.count
 
         VStack(spacing: 12) {

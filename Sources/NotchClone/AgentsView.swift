@@ -5,7 +5,7 @@ struct AgentsView: View {
     @Bindable var plans: PlanStore
 
     var body: some View {
-        let board = AgentBoard(agents: herdr.agents, workspaces: herdr.workspaces, plans: plans.plans)
+        let board = AgentBoard(agents: herdr.agents, workspaces: herdr.workspaces, plans: plans.plans, progressByAgentId: herdr.progressByAgentId)
 
         VStack(alignment: .leading, spacing: 8) {
             if !herdr.isAvailable {
