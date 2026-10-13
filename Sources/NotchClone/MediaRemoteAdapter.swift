@@ -1,4 +1,5 @@
 import AppKit
+import Darwin
 import Foundation
 import Observation
 
@@ -42,6 +43,8 @@ final class MediaRemoteAdapter {
         guard let paths = Self.findAdapterPaths() else {
             return
         }
+
+        Self.reapOrphans()
 
         isIntentionalStop = false
         restartTask?.cancel()
@@ -264,6 +267,46 @@ final class MediaRemoteAdapter {
             try proc.run()
             proc.waitUntilExit()
             deadline.cancel()
+        } catch {
+            deadline.cancel()
+        }
+    }
+
+    nonisolated static func reapOrphans() {
+        let proc = Process()
+        proc.executableURL = URL(fileURLWithPath: "/bin/ps")
+        proc.arguments = ["-axo", "pid=,ppid=,command="]
+        let pipe = Pipe()
+        proc.standardOutput = pipe
+        proc.standardError = FileHandle.nullDevice
+
+        let deadline = DispatchWorkItem {
+            if proc.isRunning {
+                proc.terminate()
+            }
+        }
+        DispatchQueue.global().asyncAfter(deadline: .now() + 5.0, execute: deadline)
+
+        do {
+            try proc.run()
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            proc.waitUntilExit()
+            deadline.cancel()
+
+            guard let output = String(data: data, encoding: .utf8) else { return }
+            let lines = output.components(separatedBy: "\n")
+            for line in lines {
+                let trimmed = line.trimmingCharacters(in: .whitespaces)
+                guard !trimmed.isEmpty else { continue }
+                let parts = trimmed.split(separator: " ", maxSplits: 2, omittingEmptySubsequences: true)
+                guard parts.count >= 3 else { continue }
+                guard let pid = Int32(parts[0]), let ppid = Int32(parts[1]) else { continue }
+                let command = String(parts[2])
+
+                if ppid == 1 && command.contains("mediaremote-adapter.pl") && command.contains("stream") {
+                    kill(pid, SIGTERM)
+                }
+            }
         } catch {
             deadline.cancel()
         }

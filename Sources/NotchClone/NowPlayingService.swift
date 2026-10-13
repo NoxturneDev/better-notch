@@ -62,6 +62,11 @@ final class NowPlayingService {
         pollTask = nil
     }
 
+    func stop() {
+        stopPolling()
+        adapter.stop()
+    }
+
     func refresh() {
         Task { [weak self] in
             await self?.refreshAsync()
