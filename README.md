@@ -3,7 +3,7 @@
 An original macOS background app that places a black notch-shaped panel over the MacBook display notch. Hovering over the notch expands it into a compact panel with tabbed widgets:
 
 - **Home Tab**:
-  - **Now-Playing Media Widget**: Displays the current track and album artwork from Spotify or Apple Music with play/pause, next, and previous track controls (via AppleScript and DistributedNotificationCenter).
+  - **Now-Playing Media Widget**: Displays the current track, artist, and album artwork from any active media source (Chrome, Safari, YouTube, Spotify, Apple Music, VLC, podcasts) with play/pause, next, and previous track controls. Uses a bundled `mediaremote-adapter` child process (`/usr/bin/perl`) for real-time push events, with automatic AppleScript fallback for Spotify and Apple Music.
   - **Files Tray**: Drag and drop files onto the notch (closed or open) to stage them in memory, drag them out, AirDrop them directly, or clear the tray.
 - **Agents Tab**:
   - Displays herdr multi-agent swarm status and active vault task plans.
@@ -73,6 +73,10 @@ NotchClone runs as an accessory background app without a Dock icon (`LSUIElement
 NotchClone requires **no privacy permissions** (no Location, Accessibility, Screen Recording, Notifications, or Calendar permissions).
 
 On first interaction with media playback controls or polling Spotify / Apple Music, macOS prompts for standard AppleScript Automation permissions (`NSAppleEventsUsageDescription`) to allow controlling playback and reading song metadata.
+
+### System-Wide Now Playing & MediaRemote
+
+NotchClone detects media playback across all macOS applications (Chrome, Safari, YouTube, Spotify, Apple Music, podcasts, VLC, etc.) by bundling the open-source `mediaremote-adapter`. Because macOS 15.4+ restricts direct calls to the private MediaRemote framework from non-Apple entitled binaries, the adapter runs via `/usr/bin/perl` (a platform-entitled system binary) and streams JSON state updates to NotchClone in real time without background polling. If the private API behavior changes or the adapter exits, NotchClone automatically falls back to AppleScript for Spotify and Apple Music.
 
 ### Configuration
 
