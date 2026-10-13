@@ -14,8 +14,10 @@ final class AppServices {
     let herdr = HerdrService()
     let plans = PlanStore()
     let usage = UsageService()
+    let today = TodayStore()
 
     var notchAgentsVisible = false
+    var notchTodayVisible = false
     var popoverVisible = false
 
     func updateAgentsActivity() {
@@ -25,7 +27,11 @@ final class AppServices {
         if popoverVisible { usage.start() } else { usage.stop() }
     }
 
+    func updateTodayActivity() {
+        today.setTabVisible(notchTodayVisible)
+    }
+
     var showsClosedIndicators: Bool {
-        nowPlaying.track?.isPlaying == true || timer.isRunning || herdr.waitingCount > 0
+        nowPlaying.track?.isPlaying == true || timer.isRunning || herdr.waitingCount > 0 || today.readyToWrapUpCount > 0
     }
 }
