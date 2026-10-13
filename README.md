@@ -4,6 +4,8 @@ A macOS background app that turns the MacBook camera notch into a small hover pa
 
 Written from scratch in Swift using Apple frameworks only. No Dock icon, no account, no privacy permissions.
 
+![Home tab: now playing from a browser tab, files tray](docs/screenshots/home-tab.png)
+
 ![Agents tab: project card with lead, task progress and next step](docs/screenshots/agents-tab.png)
 
 ## Features
